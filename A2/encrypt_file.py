@@ -17,6 +17,7 @@ KEYHEX is 20 hex chars (80-bit key), e.g. 00112233445566778899.
 Check yourself: enc then dec must give back a file identical to the original.
 """
 import sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'A1'))
 from trivium import keystream
 
 
@@ -24,36 +25,39 @@ IV_LEN = 10   # 80-bit IV, stored as the first 10 bytes of the ciphertext
 
 
 def encrypt_file(key: bytes, infile: str, outfile: str):
-    data = open(infile, 'rb').read()
-    # TODO:
-    #   1. iv = os.urandom(IV_LEN)         
-    iv = os.urandom(IV_LEN)     # fresh random IV
-    #   2. ks = keystream(key, iv, len(data))
-    ks = keystream(key, iv, len(data))  # generate key stream
-    #   3. cipher = XOR of data and ks
-    cipher = bytes([data[i] ^ ks[i] for i in range(len(data))])
-    #   4. write iv + cipher to outfile
-    open(outfile, 'wb').write(iv + cipher)
-    raise NotImplementedError("encrypt_file")
+    with open(infile, 'rb') as source:
+        data = source.read()
+    iv = os.urandom(IV_LEN)
+    ks = keystream(key, iv, len(data))
+    cipher = bytes(data_byte ^ key_byte for data_byte, key_byte in zip(data, ks))
+    with open(outfile, 'wb') as destination:
+        destination.write(iv + cipher)
 
 
 def decrypt_file(key: bytes, infile: str, outfile: str):
-    blob = open(infile, 'rb').read()
-    # TODO:
-    #   1. split off the first IV_LEN bytes as iv, the rest is cipher
-    iv, cipher = blob[:IV_LEN],blob[IV_LEN:]
+    with open(infile, 'rb') as source:
+        blob = source.read()
+    if len(blob) < IV_LEN:
+        raise ValueError(f"ciphertext must contain at least {IV_LEN} IV bytes")
+    iv, cipher = blob[:IV_LEN], blob[IV_LEN:]
     #   2. ks = keystream(key, iv, len(cipher))
     ks = keystream(key, iv, len(cipher))
     #   3. plain = XOR of cipher and ks
-    plain = bytes([cipher[i] ^ ks[i] for i in range(len(cipher))])
+    plain = bytes(cipher_byte ^ key_byte for cipher_byte, key_byte in zip(cipher, ks))
     #   4. write plain to outfile
-    open(outfile, 'wb').write(plain)
-    raise NotImplementedError("decrypt_file")
+    with open(outfile, 'wb') as destination:
+        destination.write(plain)
 
 
 if __name__ == '__main__':
     mode, keyhex, infile, outfile = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
-    key = bytes.fromhex(keyhex)
-    assert len(key) == 10, "key must be 20 hex chars (80 bits)"
+    if mode not in ('enc', 'dec'):
+        raise SystemExit("mode must be 'enc' or 'dec'")
+    try:
+        key = bytes.fromhex(keyhex)
+    except ValueError as error:
+        raise SystemExit("key must contain exactly 20 hexadecimal characters") from error
+    if len(key) != 10 or len(keyhex) != 20:
+        raise SystemExit("key must contain exactly 20 hexadecimal characters")
     (encrypt_file if mode == 'enc' else decrypt_file)(key, infile, outfile)
     print(f"{mode}: wrote {outfile}")
