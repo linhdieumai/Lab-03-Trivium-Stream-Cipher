@@ -36,11 +36,10 @@ def cube_sum(key_bits, cube, R):
     total = 0
     for a in range(2 ** len(cube)):
         iv = [0] * 80
-        # TODO: set the cube bits of `iv` from the integer `a`:
-        #       bit j of `a` goes to IV position cube[j]  (positions are 1-based!)
-        # TODO: z = first output bit of Trivium(key_bits, iv, init_rounds=R)
-        #       total ^= z
-        raise NotImplementedError("cube_sum")
+        for j, position in enumerate(cube):
+            iv[position - 1] = (a >> j) & 1
+        z = Trivium(key_bits, iv, init_rounds=R).keystream_bits(1)[0]
+        total ^= z
     return total
 
 def is_constant(cube, R, n_keys=50):
@@ -50,9 +49,11 @@ def is_constant(cube, R, n_keys=50):
     first = None
     for _ in range(n_keys):
         key = [random.getrandbits(1) for _ in range(80)]
-        # TODO: v = cube_sum(key, cube, R)
-        #       remember the first value; if a later v differs, return False
-        raise NotImplementedError("is_constant")
+        v = cube_sum(key, cube, R)
+        if first is None:
+            first = v
+        elif v != first:
+            return False
     return True
 
 def max_rounds(cube, start=100, screen_keys=10, confirm_keys=50):
