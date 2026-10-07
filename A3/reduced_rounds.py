@@ -35,10 +35,9 @@ def avalanche(R, n_pairs=100, n_bits=64):
         iv  = bytes_to_bits(os.urandom(10))
         iv2 = iv[:]
         iv2[0] ^= 1                         # flip one IV bit
-        # TODO: out1 = first n_bits output bits of Trivium(key, iv,  init_rounds=R)
-        #       out2 = first n_bits output bits of Trivium(key, iv2, init_rounds=R)
-        #       changed += number of positions where out1 and out2 differ
-        raise NotImplementedError("avalanche")
+        out1 = Trivium(key, iv,  init_rounds=R).keystream_bits(n_bits)
+        out2 = Trivium(key, iv2, init_rounds=R).keystream_bits(n_bits)
+        changed += sum(a != b for a, b in zip(out1, out2))
     return changed / (n_pairs * n_bits)
 
 def main():
