@@ -22,9 +22,11 @@ WARNING --- "constant for the keys I tried" is not a proof. With few keys you
 may be lucky. Test with at least 50 random keys before you believe a result;
 the grader re-tests every claim with many more keys.
 """
-import os, random
+import os, random, sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'A1'))
 from trivium import Trivium
-
+from fast_cube import fast_cube_sum
+rng = random.Random(1)
 def cube_sum(key_bits, cube, R):
     """
     key_bits : list of 80 key bits
@@ -49,7 +51,7 @@ def is_constant(cube, R, n_keys=50):
     first = None
     for _ in range(n_keys):
         key = [random.getrandbits(1) for _ in range(80)]
-        v = cube_sum(key, cube, R)
+        v = fast_cube_sum(key, cube, R)
         if first is None:
             first = v
         elif v != first:
@@ -61,6 +63,7 @@ def max_rounds(cube, start=100, screen_keys=10, confirm_keys=50):
     Search upwards (steps of 10, then 1) with a cheap screen of `screen_keys`
     keys, then CONFIRM the answer with `confirm_keys` keys, stepping down if
     the confirmation fails."""
+    confirm_keys = rng.randint(50,100)
     R = start
     while is_constant(cube, R + 10, screen_keys):
         R += 10
@@ -68,9 +71,12 @@ def max_rounds(cube, start=100, screen_keys=10, confirm_keys=50):
         R += 1
     while R > 0 and not is_constant(cube, R, confirm_keys):
         R -= 1                      # the screen was too optimistic
-    return R
+    return R,confirm_keys
 
 if __name__ == '__main__':
     # B2: try some cubes.  Extend this list in your experiments.
-    for cube in ([1], [1, 4], [1, 4, 7, 10], [1, 4, 7, 10, 13, 16]):
-        print(f"cube {cube}: constant up to R = {max_rounds(cube)}")
+    for trial in range(5):
+        k = rng.randint(1, 10)
+        cube = sorted(rng.sample(range(1, 81), k))
+        R, confirm_keys = max_rounds(cube)
+        print(f"cube {cube}: constant up to R = {R} (confirmed with {confirm_keys} keys)")

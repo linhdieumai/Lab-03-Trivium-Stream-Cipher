@@ -1,0 +1,27 @@
+[
+#1
+    {
+        "rounds": 269,
+        "cube": [1],
+        "confirmed with": 51 keys
+    },
+#2
+    {
+        "rounds": 381,
+        "cube": [1, 4],
+        "confirmed with": 76 keys
+    },
+#4
+    {
+        "rounds": 497,
+        "cube": [1, 4, 7, 10],
+        "confirmed with": 85 keys
+    },
+#6
+    {
+        "rounds": 570,
+        "cube": [1, 4, 7, 10, 13, 16],
+        "confirmed with": 91 keys
+    }
+]
+
