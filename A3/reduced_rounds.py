@@ -23,8 +23,9 @@ Questions for your report:
     safety margin? (Attacks on reduced-round Trivium work in the region where
     the curve has NOT yet fully settled in a way that simple tests can see.)
 """
-import os
-from trivium import Trivium, bytes_to_bits
+import os, sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'A1'))
+from trivium import bytes_to_bits, Trivium
 
 def avalanche(R, n_pairs=100, n_bits=64):
     """Average fraction of the first n_bits output bits that change when the
